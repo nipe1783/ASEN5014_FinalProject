@@ -42,6 +42,8 @@ K = place(A,B,p);
 x_0 = [0; 0; 0; 0; 0; 0];
 t = linspace(0, 240, 2400); % Modify this as needed
 
+
+
 % Applying thrust on all motors for half time and 0 motors for half time.
 u_1 = [1; 1; 1; 1]; % Reference input. Change these.
 u_2 = [0; 0; 0; 0]; % Reference input. Change these.
@@ -103,3 +105,22 @@ title('Response of Inertial Velocity Z');
 ylabel('Inertial Velocity Z');
 xlabel('Time [S]');
 line([vertical_line_time vertical_line_time], ylim, 'Color', 'r', 'LineStyle', '--');
+
+
+%% Problem 4:
+% p = [-1;-2;-3;-4;-5;-6]; % Desired Poles feel free to change these.
+% K = place(A,B,p);
+% F = eye(4,6);
+% 
+% A_cl = A - B*K;
+% B_cl = B;
+% sys_cl = ss(A_cl, B_cl, C, D);
+% 
+% % Simulating systems respose:
+% x_0 = [0; 0; 0; 0; 0; 0];
+% t = linspace(0, 240, 2400); % Modify this as needed
+% r = [0; 0; 0; 0; 10; 0];
+% for i = 1:length(t)
+%     x_dot = A*x + B*u;
+% end
+
