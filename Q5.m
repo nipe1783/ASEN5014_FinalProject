@@ -55,7 +55,7 @@ L = place(A', C', op)';
 Ao  = [A-B*K B*K;
         zeros(size(A)) A-L*C];
 
-% Uncomment if we have F
+%%%%%%%%%% TODO: UNCOMMENT WHEN WE HAVE F %%%%%%%%%%%%%%%%%%%%%
 % Bo  = [B*F;
 %        zeros(size(B))];
 Bo  = [B;
@@ -67,8 +67,12 @@ Do  = 0;
 % Closed-loop observer-based control system
 sys = ss(Ao, Bo, Co, Do);
 
+%%%%%%%%%% TODO: MULTIPLY B MATRIX BY F %%%%%%%%%%%%%%%%%%%%%
+sys_norm = ss(A-B*K, B, C, D);
+
 % Simulating systems respose:
-x_0 = [1; 0; 2; 0; 0; 0; 1; 1; 1; 1; 1; 1];
+x_0 = [1; 0; 2; 0; 0; 0];
+x_0_err = [1; 1; 2; 1; 1; 1];
 t = linspace(0, 240, 2400); % Modify this as needed
 
 % Applying thrust on all motors for half time and 0 motors for half time.
@@ -79,7 +83,8 @@ U = repmat(u_1', halfway_point, 1);
 U = [U; repmat(u_2', length(t) - halfway_point, 1)];
 
 % Simulate the system's response using lsim
-[Y, T, X] = lsim(sys, U, t, x_0);
+[Y, T, X] = lsim(sys, U, t, [x_0;x_0_err]);
+[Y_norm, T_norm, X_norm] = lsim(sys_norm, U, t, x_0);
 
 % Define the line width
 line_width = 2;
@@ -89,7 +94,7 @@ vertical_line_time = t(halfway_point);
 
 % Plot the response
 
-x_pos = [X(:,1), X(:,3), X(:,5)];
+x_pos = [X(:,1), X(:,3), X(:,5), X_norm(:,1), X_norm(:,3), X_norm(:,5)];
 tit_pos = ["Response of Inertial Position X", "Response of Inertial Position Y", "Response of Inertial Position Z"];
 xlbl_pos = repmat("Time [S]", 1, 3);
 ylbl_pos = ["Inertial Position X", "Inertial Position Y", "Inertial Position Z"];
@@ -101,7 +106,7 @@ xlbl_pos_err = repmat("Time [S]", 1, 3);
 ylbl_pos_err = ["Error X", "Error Y", "Error Z"];
 pos_err = custom_plot_3(T, x_pos_err, line_width, vertical_line_time, tit_pos_err, xlbl_pos_err, ylbl_pos_err);
 
-x_vel = [X(:,2), X(:,4), X(:,6)];
+x_vel = [X(:,2), X(:,4), X(:,6), X_norm(:,2), X_norm(:,4), X_norm(:,6)];
 tit_vel = ["Response of Inertial Velocity X", "Response of Inertial Velocity Y", "Response of Inertial Velocity Z"];
 xlbl_vel = repmat("Time [S]", 1, 3);
 ylbl_vel = ["Inertial Velocity X", "Inertial Velocity Y", "Inertial Velocity Z"];
@@ -119,21 +124,39 @@ function fig_handl = custom_plot_3(T, X, line_width, vertical_line_time, tit, xl
     
     fig_handl = figure;
     subplot(3, 1, 1);
+    hold on
     plot(T, X(:, 1), 'LineWidth', line_width);
+    if (size(X,2) == 6)
+        plot(T, X(:, 4), 'LineWidth', line_width);
+        legend('With Observer','Without Observer')
+    end
+    hold off
     title(tit(1));
     ylabel(ylbl(1));
     xlabel(xlbl(1));
     line([vertical_line_time vertical_line_time], ylim, 'Color', 'r', 'LineStyle', '--');
     
     subplot(3, 1, 2);
+    hold on
     plot(T, X(:, 2), 'LineWidth', line_width);
+    if (size(X,2) == 6)
+        plot(T, X(:, 5), 'LineWidth', line_width);
+        legend('With Observer','Without Observer')
+    end
+    hold off
     title(tit(2));
     ylabel(ylbl(2));
     xlabel(xlbl(2));
     line([vertical_line_time vertical_line_time], ylim, 'Color', 'r', 'LineStyle', '--');
     
     subplot(3, 1, 3);
+    hold on
     plot(T, X(:, 3), 'LineWidth', line_width);
+    if (size(X,2) == 6)
+        plot(T, X(:, 6), 'LineWidth', line_width);
+        legend('With Observer','Without Observer')
+    end
+    hold off
     title(tit(3));
     ylabel(ylbl(3));
     xlabel(xlbl(3));
