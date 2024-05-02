@@ -1,0 +1,50 @@
+clc; clear all; close all
+
+
+k_dLat = 0.0104; % N*s/m
+k_dVert = 0.0208; % N*s/m
+m = 1; %kg
+delta = 0.04167;
+gamma = 0.4;
+
+A = [0 1 0 0 0 0;
+     0, -k_dLat/m 0 0 0 0;
+     0 0 0 1 0 0;
+     0 0 0 -k_dLat/m  0 0;
+     0 0 0 0 0 1;
+     0 0 0 0 0 -k_dVert/m];
+
+B = [0 0 0 0;
+     -delta/m 0 delta/m 0;
+     0 0 0 0;
+     0 -delta/m 0 delta/m;
+     0 0 0 0;
+     gamma/m gamma/m gamma/m gamma/m];
+
+C = [1, 0, 0, 0, 0, 0;
+    0, 0, 1, 0, 0, 0;
+    0, 0, 0, 0, 1, 0];
+
+D = [0, 0, 0, 0;
+    0, 0, 0, 0;
+    0, 0, 0, 0];
+
+
+%% Problem 3
+
+ % Observavblity: 
+   Obs = conmat(A',C');
+   Obscheck = length(A') - rank(Obs); % check is the matrix is obseravble
+   
+  
+ % Controlability 
+   Con = conmat(A,B)';
+   Concheck = length(A) - rank(Con); % checks if the matrix is controllable
+   
+function CM = conmat(A,B)
+        CM = B;
+        for i = 2:length(A)
+            CM = [CM,(A^(i-1))*B];
+        end 
+    end
+
