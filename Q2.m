@@ -50,7 +50,7 @@ sys = ss(A, B, C, D);
 % Finding Optimal F:
 F_initial = zeros(4,6);
 costFunction = @(F) systemSimulation(A, B, C, D, F, r);
-options = optimset('Display', 'iter', 'PlotFcns', @optimplotfval);
+options = optimset('Display', 'iter', 'PlotFcns', @optimplotfval,'TolX', 1e-10,'TolFun', 1e-10);
 F_opt = fminsearch(costFunction, F_initial, options);
 
 % Run the system with optimal F:
@@ -175,8 +175,8 @@ function error = systemSimulation(A, B, C, D, F, r)
     sys = ss(A, B, C, D);
     t = linspace(0, 240, 2400);
     [Y, T, X] = lsim(sys, repmat(u', length(t), 1), t);
-    finalX = X(end, :);
-    error = abs(finalX(2) - r(2));
-    error = error + abs(finalX(4) - r(4));
-    error = error + abs(finalX(6) - r(6));
+    error = 0;
+    for i = 1:length(t)
+        error = error + sum((r - X(i, :)').^2);
+    end
 end

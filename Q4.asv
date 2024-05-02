@@ -1,0 +1,150 @@
+clear; close all; clc
+
+% 4. (20 pts) Design a state feedback controller to place poles in desired locations. Simulate
+% the closed loop system under the same reference input used in Part 2. Discuss whether
+% the closed loop response corresponds with what is expected considering the desired
+% closed loop pole locations.
+
+%% Setup
+
+k_dLat = .0104; % N*s/m
+k_dVert = .0208; % N*s/m
+m = 1; %kg
+delta = .04167;
+gamma = .4;
+
+A = [0 1 0 0 0 0;
+     0, -k_dLat/m 0 0 0 0;
+     0 0 0 1 0 0;
+     0 0 0 -k_dLat/m  0 0;
+     0 0 0 0 0 1;
+     0 0 0 0 0 -k_dVert/m];
+
+B = [0 0 0 0;
+     -delta/m 0 delta/m 0;
+     0 0 0 0;
+     0 -delta/m 0 delta/m;
+     0 0 0 0;
+     gamma/m gamma/m gamma/m gamma/m];
+
+C = [1, 0, 0, 0, 0, 0;
+    0, 0, 1, 0, 0, 0;
+    0, 0, 0, 0, 1, 0];
+
+D = [0, 0, 0, 0;
+    0, 0, 0, 0;
+    0, 0, 0, 0];
+
+
+
+%% Problem 4: Feedback Control
+
+% Desired poles of controller
+p = [-.1;-.1;-.1;-.01;-.2;-.01];
+% Gain matrix for closed loop system which gives desired behavior via poles
+K = place(A,B,p);
+
+F = zeros(4,6);
+F(:,1) = -1.45e-2*[1.01, 1.01, -1, -1]';
+r = [10 1 10 1 10 1]';
+
+
+% Simulating systems respose:
+x_0 = [0; 0; 0; 0; 0; 0];
+t = linspace(0, 240, 2400);
+dt = t(2)-t(1);
+
+
+
+% F_initial = zeros(4,6);
+% costFunction = @(F) systemSimulation(A, B, C, D, F, K, r, t);
+% options = optimset('Display', 'iter', 'PlotFcns', @optimplotfval,'TolX', 1e-10,'TolFun', 1e-10);
+% F_opt = fminsearch(costFunction, F_initial, options);
+
+% Linear Simulation
+F = [-0.118581041391804	-0.0333284680077884	0.0424795838732776	-0.265595652573626	-0.0897187569160464	0.213918263912007
+0.0329002724785178	0.148707774727732	0.0334371394893539	-0.110362965476469	-0.383077552374542	-0.188595035774052
+0.398825597436355	0.0248268230926603	0.179982366709775	-0.120941858062140	0.0511487996638934	-0.0685363441966799
+0.00765437931685877	-0.158469950626818	0.0389171057177413	0.138368581565851	-0.120746618913592	0.224990774207421];
+
+x = x_0;
+y = C*x;
+for i = 1:length(t)-1
+    u(:,i) = F*r - K*x(:,i); % New control
+    dX(:,i+1) = A*x(:,i) + B*u(:,i); % dX with new control
+    x(:,i+1) = x(:,i) + dX(:,i+1)*dt; % next linear state
+    y(:,i+1) = C*x(:,i+1); % next output
+end
+X = x';
+Y = y';
+plotStateandOutput(t(1:100),X(1:50,:),Y(1:50,:))
+
+
+function plotStateandOutput(T,X,Y)
+
+line_width = 1.5;
+
+figure;
+subplot(2,3, 1);
+plot(T, X(:, 1), 'LineWidth', line_width);
+title('Response of Inertial Position X');
+ylabel('Inertial Position X');
+xlabel('Time [S]');
+
+
+subplot(2,3, 2);
+plot(T, X(:, 3), 'LineWidth', line_width);
+title('Response of Inertial position Y');
+ylabel('Inertial Position Y');
+xlabel('Time [S]');
+
+
+subplot(2,3, 3);
+plot(T, X(:, 5), 'LineWidth', line_width);
+title('Response of Inertial position Z');
+ylabel('Inertial Position Z');
+xlabel('Time [S]');
+
+
+subplot(2,3, 4);
+plot(T, X(:, 2), 'LineWidth', line_width);
+title('Response of Inertial Velocity X');
+ylabel('Inertial Velocity X');
+xlabel('Time [S]');
+
+
+subplot(2,3, 5);
+plot(T, X(:, 4), 'LineWidth', line_width);
+title('Response of Inertial Velocity Y');
+ylabel('Inertial Velocity Y');
+xlabel('Time [S]');
+
+
+subplot(2,3, 6);
+plot(T, X(:, 6), 'LineWidth', line_width);
+title('Response of Inertial Velocity Z');
+ylabel('Inertial Velocity Z');
+xlabel('Time [S]');
+
+end
+
+function error = systemSimulation(A, B, C, D, F, K, r, t)
+    x_0 = [0; 0; 0; 0; 0; 0];
+    dt = t(2) - t(1);
+    x = x_0;
+    y = C * x;
+    for i = 1:length(t)-1
+        u(:,i) = F * r - K * x(:,i); % New control
+        dX(:,i+1) = A * x(:,i) + B * u(:,i); % dX with new control
+        x(:,i+1) = x(:,i) + dX(:,i+1) * dt; % next linear state
+        y(:,i+1) = C * x(:,i+1); % next output
+    end
+    X = x';
+    error = inf;
+    for i = 1:length(t)
+        current_error = norm(X(i, :) - r');
+        if current_error < error
+            error = current_error;
+        end
+    end
+end
