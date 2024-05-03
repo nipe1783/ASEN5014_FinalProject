@@ -35,7 +35,7 @@ D = [0, 0, 0, 0;
     0, 0, 0, 0];
 
 % Desired poles of controller
-p = [-1.1;-2.1;-3.9;-2.15;-1.4;-2.3];
+p = [-1;-2;-1;-2;-1;-2];
 
 % Gain matrix for closed loop system which gives desired behavior via poles
 K = place(A,B,p);
@@ -44,15 +44,16 @@ K = place(A,B,p);
 % F = ones(4,6);
 % F(3:4,:) = 2*F(3:4,:)
 
-F = [-132.064937876818	-70.6494618657608	-0.883893838673886	14.5688168059468	33.0453371555401	-203.206432594426
-72.2335696400482	101.090592395416	-101.539359701207	-22.3946356904322	-7.22370006795745	203.551453011367
--8.11602707473124	-140.204038704589	106.532674433090	-43.8591736745134	-10.9154203015058	38.3158635623288
--9.90389510334388	6.84564867828146	97.9221078354695	70.6088072047673	-47.4835413225389	187.103412971369];
+F = [ -18.6250    5.2849  -10.2335   63.0801   -1.9757   -3.0049;...
+    4.0959  -15.3505   -9.4858   -3.6883   -9.3075   -6.8372;...
+    6.1385  -14.4065  -12.7261  -35.3226   23.7870    7.3094;...
+   10.2714  -13.5149    6.7720   15.0874   16.2929    8.6853];
 
 %% Building observer
 
  % Observer poles
-op = [-1;-1.1;-1.2;-0.6;-0.1;-0.2];
+% op = [-1;-1.1;-1.2;-0.6;-1.1;-1.2];
+op = [-1;-2;-1;-2;-1;-2];
 
 % Observer gain matrix
 L = place(A', C', op)';
@@ -77,19 +78,19 @@ sys = ss(Ao, Bo, Co, Do);
 sys_norm = ss(A-B*K, B*F, C, 0);
 
 % Simulating systems respose:
-x_0 = [1; 1; 2; 1; 1; 1];
-x_0_err = [1; 1; 2; 1; 1; 1];
+x_0 = [0; 0; 0; 0; 0; 0];
+x_0_err = [2; 2; 2; 2; 2; 2];
 t = linspace(0, 240, 2400); % Modify this as needed
 
 % Applying thrust on all motors for half time and 0 motors for half time.
-u_1 = [1; 1; 1; 1]; % Reference input. Change these.
-u_2 = [0; 0; 0; 0]; % Reference input. Change these.
+% u_1 = [1; 1; 1; 1]; % Reference input. Change these.
+% u_2 = [0; 0; 0; 0]; % Reference input. Change these.
 halfway_point = length(t)/2;
-U = repmat(u_1', halfway_point, 1);
-U = [U; repmat(u_2', length(t) - halfway_point, 1)];
+% U = repmat(u_1', halfway_point, 1);
+% U = [U; repmat(u_2', length(t) - halfway_point, 1)];
 
-r_1 = [1000; 1; 10; 1; 10; 1];
-r_2 = [5; 1; 5; 1; 5; 1];
+r_1 = [10; 0; 10; 0; 10; 0];
+r_2 = [5; 0; 5; 0; 5; 0];
 R = repmat(r_1', halfway_point, 1);
 R = [R; repmat(r_2', length(t) - halfway_point, 1)];
 
@@ -148,12 +149,17 @@ vel_err = custom_plot_3(T, x_vel_err, line_width, vertical_line_time, tit_vel_er
 %
 % For a drone we want fast response or else we crash and we can use lots of
 % control effort
-alpha = 10000;
-Q = alpha * eye(size(A));
+hold = ss(A,B,C,D);
 
+alpha = 1500;
+Q = alpha * eye(6);
+Q(5,5) = 5;
+Q(6,6) = 20;
+% Q = eye(6);
+R_input_6 = R;
 R = eye(size(B,2));
 
-[K6,S,P] = lqr(sys_norm,Q,R);
+[K6,S,P] = lqr(hold,Q,R);
 
 % Combine state-feedback controller and observer
 A6  = [A-B*K6 B*K6;
@@ -162,8 +168,8 @@ A6  = [A-B*K6 B*K6;
 %%%%%%%%%% TODO: UNCOMMENT WHEN WE HAVE F %%%%%%%%%%%%%%%%%%%%%
 % Bo  = [B*F;
 %        zeros(size(B))];
-B6  = [B;
-       zeros(size(B))];
+B6  = [B*F;
+       zeros(size(B*F))];
 
 C6  = [C zeros(size(C))];
 
@@ -171,7 +177,7 @@ D6  = 0;
 % Closed-loop observer-based control system
 sys6 = ss(A6, B6, C6, D6);
 
-[Y6, T6, X6] = lsim(sys6, U, t, [x_0;x_0_err]);
+[Y6, T6, X6] = lsim(sys6, R_input_6, t, [x_0;x_0_err]);
 
 %% Plots for Q6
 leg6 = ["Normal Close Loop With Observer","Infinite Horizon Cost Function"];
