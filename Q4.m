@@ -43,7 +43,7 @@ D = [0, 0, 0, 0;
 p = [-1;-.1;-1;-.1;-1;-.1];
 % Gain matrix for closed loop system which gives desired behavior via poles
 K = place(A,B,p);
-r = [10 1 10 1 10 1]';
+r = [10 0 10 0 10 0]';
 
 
 % Simulating systems respose:
