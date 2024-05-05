@@ -141,10 +141,10 @@ vel_err = custom_plot_3(T, x_vel_err, line_width, tit_vel_err, xlbl_vel_err, ylb
 % control effort
 hold = ss(A,B,C,0);
 
-alpha = 1500;
+alpha = 1152;
 Q = alpha * eye(6);
-Q(5,5) = 10;
-Q(6,6) = 20;
+Q(5,5) = 6;
+Q(6,6) = 100;
 % Q = eye(6);
 R_input_6 = R;
 R = eye(size(B,2));
@@ -181,8 +181,8 @@ pos6 = custom_plot_3(T, x_pos6, line_width, tit_pos, xlbl_pos, ylbl_pos, leg6,"I
 
 %% FINDING OPTIMAL Q FOR Q6
 alpha = linspace(1,2000,100);
-q_5_5 = linspace(1,1000,1000);
-q_6_6 = linspace(1,1000,1000);
+q_5_5 = linspace(1,100,100);
+q_6_6 = linspace(1,100,100);
 min_err = 100;
 saved_states = zeros(1,3);
 for k = 1:length(alpha)
@@ -200,7 +200,7 @@ for k = 1:length(alpha)
             D6  = 0;
             sys6 = ss(A6, B6, C6, D6);
             [Y6, T6, X6] = lsim(sys6, R_input_6, t, [x_0;x_0_err]);
-            err = sqrt((X6(1200,1) - 10)^2 + (X6(1200,3) - 10)^2 + (X6(1200,5) - 10)^2);
+            err = sqrt((X6(end,1) - 10)^2 + (X6(end,3) - 10)^2 + (X6(end,5) - 10)^2);
             if(err < min_err)
                 min_err = err;
                 saved_states = [i,j,k];
@@ -209,11 +209,6 @@ for k = 1:length(alpha)
     end
 end
 
-x_pos6 = [X(:,1), X(:,3), X(:,5), X6(:,1), X6(:,3), X6(:,5)];
-tit_pos = ["Response of Inertial Position X", "Response of Inertial Position Y", "Response of Inertial Position Z"];
-xlbl_pos = repmat("Time [S]", 1, 3);
-ylbl_pos = ["Inertial Position X", "Inertial Position Y", "Inertial Position Z"];
-pos6 = custom_plot_3(T, x_pos6, line_width, tit_pos, xlbl_pos, ylbl_pos, leg6,"Optimal Inf Horizon");
 
 function fig_handl = custom_plot_3(T, X, line_width, tit, xlbl, ylbl, leg, sgtit)
     
