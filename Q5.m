@@ -59,7 +59,6 @@ L = place(A', C', op)';
 Ao  = [A-B*K B*K;
         zeros(size(A)) A-L*C];
 
-%%%%%%%%%% TODO: UNCOMMENT WHEN WE HAVE F %%%%%%%%%%%%%%%%%%%%%
 Bo  = [B*F;
        zeros(size(B*F))];
 
@@ -69,7 +68,6 @@ Do  = 0;
 % Closed-loop observer-based control system
 sys = ss(Ao, Bo, Co, Do);
 
-%%%%%%%%%% TODO: MULTIPLY B MATRIX BY F %%%%%%%%%%%%%%%%%%%%%
 sys_norm = ss(A-B*K, B*F, C, 0);
 
 % Simulating systems respose:
@@ -82,7 +80,6 @@ halfway_point = length(t)/2;
 r_1 = [10; 0; 10; 0; 10; 0];
 % r_2 = [5; 0; 5; 0; 5; 0];
 R = repmat(r_1', length(t), 1);
-% R = [R; repmat(r_2', length(t) - halfway_point, 1)];
 
 % Simulate the system's response using lsim
 [Y, T, X] = lsim(sys, R, t, [x_0;x_0_err]);
@@ -90,9 +87,6 @@ R = repmat(r_1', length(t), 1);
 
 % Define the line width
 line_width = 2;
-
-% Define the vertical line Position (time when control input was stopped)
-% vertical_line_time = t(halfway_point);
 
 % Plot the response
 
@@ -155,9 +149,6 @@ R = eye(size(B,2));
 A6  = [A-B*K6 B*K6;
         zeros(size(A)) A-L*C];
 
-%%%%%%%%%% TODO: UNCOMMENT WHEN WE HAVE F %%%%%%%%%%%%%%%%%%%%%
-% Bo  = [B*F;
-%        zeros(size(B))];
 B6  = [B*F;
        zeros(size(B*F))];
 
@@ -178,49 +169,74 @@ xlbl_pos = repmat("Time [S]", 1, 3);
 ylbl_pos = ["Inertial Position X", "Inertial Position Y", "Inertial Position Z"];
 pos6 = custom_plot_3(T, x_pos6, line_width, tit_pos, xlbl_pos, ylbl_pos, leg6,"Impact of Infinite Horizon Cost Function on Inertial Position Response");
 
+x_vel6 = [X(:,2), X(:,4), X(:,6), X6(:,2), X6(:,4), X6(:,6)];
+tit_vel6 = ["Response of Inertial Velocity X", "Response of Inertial Velocity Y", "Response of Inertial Velocity Z"];
+xlbl_vel6 = repmat("Time [S]", 1, 3);
+ylbl_vel6 = ["Inertial Velocity X", "Inertial Velocity Y", "Inertial Velocity Z"];
+vel6 = custom_plot_3(T, x_vel6, line_width, tit_vel6, xlbl_vel6, ylbl_vel6, leg6,"Impact of Infinite Horizon Cost Function on Inertial Velocity Response");
+
+x_pos_err6 = [X(:,7), X(:,9), X(:,11), X6(:,7), X6(:,9), X6(:,11)];
+tit_pos_err6 = ["Inertial Position X Estimate Error", "Inertial Position Y Estimate Error", "Inertial Position Z Estimate Error"];
+xlbl_pos_err6 = repmat("Time [S]", 1, 3);
+ylbl_pos_err6 = ["Error X", "Error Y", "Error Z"];
+pos_err6 = custom_plot_3(T, x_pos_err6, line_width, tit_pos_err6, xlbl_pos_err6, ylbl_pos_err6, leg6,"Impact of Infinite Horizon Cost Function on Inertial Position Error");
+
+x_vel_err6 = [X(:,8), X(:,10), X(:,12), X6(:,8), X6(:,10), X6(:,12)];
+tit_vel_err6 = ["Inertial Velocity X Estimate Error", "Inertial Velocity Y Estimate Error", "Inertial Velocity Z Estimate Error"];
+xlbl_vel_err6 = repmat("Time [S]", 1, 3);
+ylbl_vel_err6 = ["Error X", "Error Y", "Error Z"];
+vel_err6 = custom_plot_3(T, x_vel_err6, line_width, tit_vel_err6, xlbl_vel_err6, ylbl_vel_err6, leg6,"Impact of Infinite Horizon Cost Function on Inertial Velocity Error");
+
 
 %% FINDING OPTIMAL Q FOR Q6
-alpha = linspace(1,2000,100);
-q_5_5 = linspace(1,1000,200);
-q_6_6 = linspace(1,1000,200);
-min_err = 100;
-saved_states = zeros(1,3);
-for k = 1:length(alpha)
-    Q = alpha(k) * eye(6);
-    for i = 1:length(q_5_5)
-        Q(5,5) = q_5_5(i);
-        for j = 1:length(q_6_6)
-            Q(6,6) = q_6_6(j);
-            [K6,S,P] = lqr(hold,Q,R);
-            A6  = [A-B*K6 B*K6;
-            zeros(size(A)) A-L*C];
-            B6  = [B*F;
-                   zeros(size(B*F))];
-            C6  = [C zeros(size(C))];
-            D6  = 0;
-            sys6 = ss(A6, B6, C6, D6);
-            [Y6, T6, X6] = lsim(sys6, R_input_6, t, [x_0;x_0_err]);
-            err = sqrt((X6(1200,1) - 10)^2 + (X6(1200,3) - 10)^2 + (X6(1200,5) - 10)^2);
-            err_end = sqrt((X6(end,1) - 10)^2 + (X6(end,3) - 10)^2 + (X6(end,5) - 10)^2);
-            if(err < min_err && err_end <= err)
-                min_err = err;
-                saved_states = [i,j,k];
-            end
-        end
-    end
-end
+% alpha = linspace(1,2000,100);
+% q_5_5 = linspace(1,1000,200);
+% q_6_6 = linspace(1,1000,200);
+% min_err = 100;
+% saved_states = zeros(1,3);
+% for k = 1:length(alpha)
+%     Q = alpha(k) * eye(6);
+%     for i = 1:length(q_5_5)
+%         Q(5,5) = q_5_5(i);
+%         for j = 1:length(q_6_6)
+%             Q(6,6) = q_6_6(j);
+%             [K6,S,P] = lqr(hold,Q,R);
+%             A6  = [A-B*K6 B*K6;
+%             zeros(size(A)) A-L*C];
+%             B6  = [B*F;
+%                    zeros(size(B*F))];
+%             C6  = [C zeros(size(C))];
+%             D6  = 0;
+%             sys6 = ss(A6, B6, C6, D6);
+%             [Y6, T6, X6] = lsim(sys6, R_input_6, t, [x_0;x_0_err]);
+%             err = sqrt((X6(1200,1) - 10)^2 + (X6(1200,3) - 10)^2 + (X6(1200,5) - 10)^2);
+%             err_end = sqrt((X6(end,1) - 10)^2 + (X6(end,3) - 10)^2 + (X6(end,5) - 10)^2);
+%             if(err < min_err && err_end <= err)
+%                 min_err = err;
+%                 saved_states = [i,j,k];
+%             end
+%         end
+%     end
+% end
 
 
 function fig_handl = custom_plot_3(T, X, line_width, tit, xlbl, ylbl, leg, sgtit)
+
+    s1 = get_95p(X(:,1),T,0.05);
+    s2 = get_95p(X(:,2),T,0.05);
+    s3 = get_95p(X(:,3),T,0.05);
     
     fig_handl = figure;
     subplot(3, 1, 1);
     hold on
-    plot(T, X(:, 1), 'LineWidth', line_width);
+    plot(T, X(:, 1),'b', 'LineWidth', line_width);
     if (size(X,2) == 6)
-        plot(T, X(:, 4), 'LineWidth', line_width);
-        legend(leg(1),leg(2),'Location','SouthEast','Fontsize',16)
+        s4 = get_95p(X(:,4),T,0.05);
+        plot(T, X(:, 4),'r', 'LineWidth', line_width);
+        legend(leg(1),leg(2),'Location','SouthEast','Fontsize',16,'AutoUpdate','off')
+        xline(s4,'--r','95% Settling Time','FontSize',14)
     end
+    xline(s1,'--b','95% Settling Time','FontSize',14)
     hold off
     title(tit(1),'Fontsize',18);
     ylabel(ylbl(1),'Fontsize',16);
@@ -228,11 +244,14 @@ function fig_handl = custom_plot_3(T, X, line_width, tit, xlbl, ylbl, leg, sgtit
     
     subplot(3, 1, 2);
     hold on
-    plot(T, X(:, 2), 'LineWidth', line_width);
+    plot(T, X(:, 2),'b', 'LineWidth', line_width);
     if (size(X,2) == 6)
-        plot(T, X(:, 5), 'LineWidth', line_width);
-        legend(leg(1),leg(2),'Location','SouthEast','Fontsize',16)
+        s5 = get_95p(X(:,5),T,0.05);
+        plot(T, X(:, 5), 'r', 'LineWidth', line_width);
+        legend(leg(1),leg(2),'Location','SouthEast','Fontsize',16,'AutoUpdate','off')
+        xline(s5,'--r','95% Settling Time','FontSize',14)
     end
+    xline(s2,'--b',"95% Settling Time",'FontSize',14)
     hold off
     title(tit(2),'Fontsize',18);
     ylabel(ylbl(2),'Fontsize',16);
@@ -240,17 +259,29 @@ function fig_handl = custom_plot_3(T, X, line_width, tit, xlbl, ylbl, leg, sgtit
     
     subplot(3, 1, 3);
     hold on
-    plot(T, X(:, 3), 'LineWidth', line_width);
+    plot(T, X(:, 3),'b', 'LineWidth', line_width);
     if (size(X,2) == 6)
-        plot(T, X(:, 6), 'LineWidth', line_width);
-        legend(leg(1),leg(2),'Location','SouthEast','Fontsize',16)
+        s6 = get_95p(X(:,6),T,0.05);
+        plot(T, X(:, 6),'r', 'LineWidth', line_width);
+        legend(leg(1),leg(2),'Location','SouthEast','Fontsize',16,'AutoUpdate','off')
+        xline(s6,'--r','95% Settling Time','FontSize',14)
     end
+    xline(s3,'--b',"95% Settling Time",'FontSize',14)
     hold off
     title(tit(3),'Fontsize',18);
     ylabel(ylbl(3),'Fontsize',16);
     xlabel(xlbl(3),'Fontsize',16);
     sgtitle(sgtit,'Interpreter','None','Fontsize',24) 
 
+end
+
+function val = get_95p(x,t,p)
+    if (abs(x(1) - x(end)) < 1)
+        s = stepinfo(x(:),t,x(end),max(abs(x(end) - x(:))),"SettlingTimeThreshold",p);
+    else
+        s = stepinfo(x(:),t,x(end),x(1),"SettlingTimeThreshold",p);
+    end
+    val = s.SettlingTime;
 end
 
 
